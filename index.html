@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bluey: Soluciones felices</title>
+  <style>
+    :root {
+      --sky1: #a9e4ff;
+      --sky2: #ffe284;
+      --panel: rgba(255,255,255,0.7);
+      --deep-blue: #214a8d;
+      --dark: #1c315e;
+      --shadow: rgba(28, 63, 117, 0.18);
+      --card-a: #d5f1ff;
+      --card-b: #ffe7b3;
+      --card-c: #ffd2cc;
+      --card-d: #dffccf;
+      --success: #52d38d;
+      --danger: #ff6e7a;
+      --gold: #f6d15a;
+      --accent: #5bb0ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, var(--sky1) 0%, #8fd5ff 28%, #c9eeff 45%, var(--sky2) 100%);
+      color: var(--dark);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .game-shell {
+      width: min(1200px, 100%);
+      height: min(860px, calc(100vh - 18px));
+      position: relative;
+      border-radius: 34px;
+      background: rgba(255,255,255,0.18);
+      border: 4px solid rgba(255,255,255,0.43);
+      box-shadow: 0 28px 60px rgba(35, 79, 149, 0.18);
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+    }
+
+    .cloud, .cloud::before, .cloud::after {
+      position: absolute;
+      background: rgba(255,255,255,0.5);
+      border-radius: 999px;
+      content: "";
+    }
+
+    .cloud {
+      width: 140px;
+      height: 46px;
+      top: 54px;
+      left: 50px;
+      animation: floatCloud 12s ease-in-out infinite alternate;
+    }
+
+    .cloud::before {
+      width: 68px;
+      height: 52px;
+      left: 18px;
+      top: -22px;
+    }
+
+    .cloud::after {
+      width: 76px;
+      height: 52px;
+      right: 18px;
+      top: -18px;
+    }
+
+    .cloud.c2 {
+      left: auto;
+      right: 72px;
+      top: 120px;
+      transform: scale(0.85);
+      animation-delay: 2s;
+    }
+
+    @keyframes floatCloud {
+      0% { transform: translateX(0px); }
+      100% { transform: translateX(18px); }
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px 10px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .stars {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.78);
+      border-radius: 999px;
+      padding: 10px 16px;
+      box-shadow: inset 0 -5px 0 rgba(0,0,0,0.05), 0 12px 18px rgba(0,0,0,0.08);
+    }
+
+    .star {
+      font-size: 2rem;
+      line-height: 1;
+      color: #f3ce39;
+      filter: drop-shadow(0 4px 8px rgba(245, 182, 42, 0.4));
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .star.empty {
+      opacity: 0.22;
+      transform: scale(0.9);
+    }
+
+    .level-chip {
+      background: rgba(255,255,255,0.8);
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-weight: 900;
+      color: var(--deep-blue);
+      box-shadow: inset 0 -5px 0 rgba(0,0,0,0.05), 0 10px 18px rgba(0,0,0,0.08);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .fairy-btn {
+      border: none;
+      border-radius: 18px;
+      padding: 12px 16px;
+      background: linear-gradient(180deg, #fff7bd 0%, #ffd75f 100%);
+      box-shadow: 0 12px 20px rgba(255, 197, 60, 0.35), inset 0 -5px 0 rgba(154, 105, 0, 0.12);
+      color: var(--dark);
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .fairy-btn:active { transform: translateY(2px) scale(0.98); }
+
+    .board {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 20px;
+      height: calc(100% - 82px);
+      padding: 8px 22px 22px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .side {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      padding-top: 8px;
+      position: relative;
+    }
+
+    .speech {
+      width: 100%;
+      max-width: 230px;
+      background: rgba(255,255,255,0.82);
+      border-radius: 26px;
+      border: 3px solid rgba(255,255,255,0.9);
+      padding: 16px 14px;
+      text-align: center;
+      font-weight: 900;
+      color: var(--dark);
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,0.04), 0 18px 20px rgba(0,0,0,0.08);
+      position: relative;
+      transform: rotate(-2deg);
+    }
+
+    .speech::after {
+      content: "";
+      position: absolute;
+      left: 26px;
+      bottom: -16px;
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.82);
+      transform: rotate(45deg);
+      border-right: 3px solid rgba(255,255,255,0.9);
+      border-bottom: 3px solid rgba(255,255,255,0.9);
+    }
+
+    .avatar-wrap {
+      margin-top: 8px;
+      width: 170px;
+      height: 190px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+    }
+
+    .avatar {
+      position: relative;
+      width: 150px;
+      height: 165px;
+      filter: drop-shadow(0 22px 18px rgba(29, 83, 160, 0.2));
+    }
+
+    .avatar .head {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #f7d7b7;
+      box-shadow: inset 0 -8px 0 rgba(0,0,0,0.04);
+      z-index: 2;
+    }
+
+    .avatar .hair {
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 74px;
+      height: 28px;
+      border-radius: 18px 18px 12px 12px;
+      background: var(--hair, #4da0ff);
+      z-index: 3;
+    }
+
+    .avatar .ear {
+      position: absolute;
+      top: 24px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #f7d7b7;
+      z-index: 1;
+    }
+
+    .avatar .ear.left { left: 26px; }
+    .avatar .ear.right { right: 26px; }
+
+    .avatar .face {
+      position: absolute;
+      left: 50%;
+      top: 31px;
+      transform: translateX(-50%);
+      width: 52px;
+      height: 30px;
+      z-index: 4;
+    }
+
+    .avatar .eye {
+      position: absolute;
+      top: 8px;
+      width: 7px;
+      height: 7px;
+      background: #1f2643;
+      border-radius: 50%;
+    }
+
+    .avatar .eye.left { left: 10px; }
+    .avatar .eye.right { right: 10px; }
+
+    .avatar .smile {
+      position: absolute;
+      left: 50%;
+      bottom: 3px;
+      transform: translateX(-50%);
+      width: 18px;
+      height: 10px;
+      border: 3px solid transparent;
+      border-bottom: 3px solid #d66366;
+      border-radius: 0 0 18px 18px;
+    }
+
+    .avatar .body {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      width: 88px;
+      height: 82px;
+      border-radius: 22px 22px 16px 16px;
+      background: var(--body, #8ac8ff);
+      box-shadow: inset 0 -12px 0 rgba(0,0,0,0.06);
+      z-index: 1;
+    }
+
+    .avatar .arm {
+      position: absolute;
+      top: 90px;
+      width: 16px;
+      height: 52px;
+      border-radius: 12px;
+      background: #f7d7b7;
+      z-index: 0;
+    }
+
+    .avatar .arm.left { left: 25px; transform: rotate(24deg); }
+    .avatar .arm.right { right: 25px; transform: rotate(-24deg); }
+
+    .avatar .leg {
+      position: absolute;
+      bottom: 0;
+      width: 18px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--legs, #f4ca9a);
+      z-index: 0;
+    }
+
+    .avatar .leg.left { left: 42px; }
+    .avatar .leg.right { right: 42px; }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .prompt {
+      background: rgba(255,255,255,0.8);
+      border-radius: 28px;
+      padding: 18px 20px 16px;
+      box-shadow: inset 0 -6px 0 rgba(0,0,0,0.04), 0 16px 24px rgba(0,0,0,0.08);
+    }
+
+    .prompt-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--deep-blue);
+      font-weight: 900;
+      font-size: clamp(1.1rem, 1.8vw, 1.7rem);
+    }
+
+    .prompt-top span:first-child {
+      font-size: 2.1rem;
+      animation: bounceIcon 1.5s ease-in-out infinite alternate;
+    }
+
+    .prompt-text {
+      margin: 10px 0 0;
+      color: var(--dark);
+      font-size: clamp(1.2rem, 2vw, 2rem);
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    @keyframes bounceIcon {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-6px); }
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 18px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .card {
+      position: relative;
+      border: 4px solid rgba(255,255,255,0.8);
+      border-radius: 28px;
+      background: rgba(255,255,255,0.68);
+      box-shadow: inset 0 -7px 0 rgba(0,0,0,0.05), 0 18px 22px rgba(26, 72, 144, 0.12);
+      cursor: pointer;
+      padding: 10px;
+      overflow: hidden;
+      user-select: none;
+      touch-action: manipulation;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    }
+
+    .card:hover, .card:focus-visible {
+      transform: translateY(-4px) rotate(-0.6deg);
+      box-shadow: inset 0 -7px 0 rgba(0,0,0,0.05), 0 22px 28px rgba(26, 72, 144, 0.16);
+      border-color: rgba(103, 179, 255, 0.9);
+      outline: none;
+    }
+
+    .card:active { transform: translateY(2px) scale(0.99); }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: -12%;
+      top: -18%;
+      width: 42%;
+      height: 135%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.52), rgba(255,255,255,0));
+      transform: rotate(18deg);
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+      min-height: 202px;
+      height: 100%;
+      border-radius: 22px;
+      background: var(--tile, #f4fbff);
+      border: 2px solid rgba(255,255,255,0.4);
+      padding: 16px 14px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .tile-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.66);
+      font-size: 2rem;
+      box-shadow: inset 0 -5px 0 rgba(0,0,0,0.05);
+      transform: rotate(-2deg);
+    }
+
+    .tile-title {
+      font-weight: 900;
+      font-size: clamp(1.08rem, 1.8vw, 1.6rem);
+      text-align: center;
+      line-height: 1.2;
+      color: var(--dark);
+    }
+
+    .tile-tag {
+      text-align: center;
+      font-weight: 800;
+      color: rgba(28,49,94,0.76);
+      font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+    }
+
+    .card.correct {
+      border-color: rgba(73, 201, 121, 0.95);
+      animation: successful 0.52s ease;
+    }
+
+    .card.wrong {
+      border-color: rgba(255, 112, 128, 0.9);
+      animation: wobble 0.45s ease;
+    }
+
+    @keyframes wobble {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-10px) rotate(-1deg); }
+      40% { transform: translateX(10px) rotate(1deg); }
+      60% { transform: translateX(-8px) rotate(-1deg); }
+      80% { transform: translateX(8px) rotate(1deg); }
+    }
+
+    @keyframes successful {
+      0% { box-shadow: 0 0 0 rgba(82,211,141,0); }
+      35% { box-shadow: 0 0 0 8px rgba(82,211,141,0.18); }
+      100% { box-shadow: 0 0 0 0 rgba(82,211,141,0); }
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      min-width: min(440px, 72vw);
+      background: rgba(255,255,255,0.9);
+      border: 3px solid rgba(255,255,255,0.9);
+      border-radius: 22px;
+      padding: 14px 20px;
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(1rem, 1.7vw, 1.45rem);
+      color: var(--dark);
+      box-shadow: inset 0 -5px 0 rgba(0,0,0,0.04), 0 14px 26px rgba(0,0,0,0.08);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 20;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-4px);
+    }
+
+    .confetti-zone {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 30;
+    }
+
+    .confetti {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 12px;
+      height: 18px;
+      border-radius: 5px;
+      opacity: 0.9;
+      animation: confettiFlight 1.8s cubic-bezier(.18,.68,.25,1) forwards;
+    }
+
+    @keyframes confettiFlight {
+      0% {
+        transform: translate3d(0,0,0) rotate(0deg) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot)) scale(0.7);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .board {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 4px;
+      }
+
+      .speech {
+        max-width: 56%;
+      }
+
+      .avatar-wrap {
+        width: 120px;
+        height: 135px;
+      }
+
+      .avatar {
+        transform: scale(0.8);
+      }
+
+      .cards {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+    }
+
+    @media (max-width: 520px) {
+      .hud {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .button-group .text { display: none; }
+      .cards { grid-template-columns: 1fr; }
+      .side {
+        flex-direction: row;
+        align-items: center;
+      }
+      .speech {
+        font-size: 0.92rem;
+      }
+      .toast {
+        min-width: 86%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-shell">
+    <div class="cloud"></div>
+    <div class="cloud c2"></div>
+
+    <header class="hud">
+      <div class="stars" id="stars"></div>
+      <div class="level-chip" id="levelChip">Nivel 1</div>
+      <div class="button-group">
+        <button class="fairy-btn" id="restartBtn" type="button">
+          <span class="text">Reiniciar</span>
+        </button>
+        <button class="fairy-btn" id="nextBtn" type="button">
+          <span class="text">Siguiente</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="board">
+      <aside class="side">
+        <div class="speech" id="speechText">¡Vamos a jugar!</div>
+
+        <div class="avatar-wrap">
+          <div class="avatar" id="avatar" aria-hidden="true"></div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="prompt">
+          <div class="prompt-top"><span>🌟</span> <span id="promptType">¿Qué pasa?</span></div>
+          <p class="prompt-text" id="promptText">¡A jugar!</p>
+        </div>
+        <div class="cards" id="cards"></div>
+      </main>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <div class="confetti-zone" id="confettiZone"></div>
+  </div>
+
+  <script>
+    const levels = [
+      {
+        type: "Compartir",
+        prompt: "Bluey y Bingo quieren el mismo juguete. ¿Cuál es la mejor manera de resolverlo?",
+        correct: 0,
+        character: "Bluey",
+        options: [
+          { text: "Pedir turno y compartir", icon: "🤝", tag: "Es justo" },
+          { text: "Gritar y empujar", icon: "😠", tag: "No ayuda" },
+          { text: "Romperlo", icon: "💥", tag: "Muy malo" },
+          { text: "Llamar a la tele", icon: "📺", tag: "No sirve" }
+        ]
+      },
+      {
+        type: "Decidir juntos",
+        prompt: "La familia quiere ver algo diferente en la televisión. ¿Qué seria lo más amable?",
+        correct: 2,
+        character: "Bingo",
+        options: [
+          { text: "Pelea por el control", icon: "🕹️", tag: "No es bueno" },
+          { text: "No hablar y enojarse", icon: "😕", tag: "Se siente mal" },
+          { text: "Hablar con respeto y elegir juntos", icon: "💬", tag: "Muy amable" },
+          { text: "Cerrar la tele", icon: "📴", tag: "No resuelve" }
+        ]
+      },
+      {
+        type: "Jugar en paz",
+        prompt: "Dos hermanos quieren jugar cosas distintas. ¿Qué opción es la mejor?",
+        correct: 1,
+        character: "Bandit",
+        options: [
+          { text: "Correr sin hablar", icon: "🏃", tag: "No decide" },
+          { text: "Pedir ayuda a un adulto", icon: "🧑‍🦳", tag: "Muy prudente" },
+          { text: "Empujar al hermano", icon: "🙅", tag: "No es amable" },
+          { text: "Volver a saltar en la cama", icon: "🛏️", tag: "No es elegir" }
+        ]
+      },
+      {
+        type: "Esperar el turno",
+        prompt: "Alguien se siente triste porque ya no le toca primero. ¿Qué harían?",
+        correct: 1,
+        character: "Chilli",
+        options: [
+          { text: "Gritar y tirar todo", icon: "😤", tag: "No ayuda" },
+          { text: "Hablar con calma y esperar el turno", icon: "🫶", tag: "Muy respetuoso" },
+          { text: "Romper el juguete", icon: "💥", tag: "Malo" },
+          { text: "Salir corriendo", icon: "🏃‍♀️", tag: "No resuelve" }
+        ]
+      },
+      {
+        type: "Pedir ayuda",
+        prompt: "Un amigo está muy enojado y no sabe qué hacer. ¿Cuál es la opción más sabia?",
+        correct: 2,
+        character: "Bluey",
+        options: [
+          { text: "Ignorarlo", icon: "🤷", tag: "No ayuda" },
+          { text: "Poner cara fea", icon: "😣", tag: "No comunica" },
+          { text: "Hablar con calma y pedir ayuda a un adulto", icon: "🗣️", tag: "Muy valiente" },
+          { text: "Esconderse corriendo", icon: "😵", tag: "No resuelve" }
+        ]
+      }
+    ];
+
+    const maxStars = 5;
+    let stars = 0;
+    let levelIndex = 0;
+    let locked = false;
+
+    const starsEl = document.getElementById("stars");
+    const levelChip = document.getElementById("levelChip");
+    const cardsEl = document.getElementById("cards");
+    const speechText = document.getElementById("speechText");
+    const promptType = document.getElementById("promptType");
+    const promptText = document.getElementById("promptText");
+    const toast = document.getElementById("toast");
+    const confettiZone = document.getElementById("confettiZone");
+    const avatar = document.getElementById("avatar");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    function renderStars() {
+      starsEl.innerHTML = "";
+      for (let i = 0; i < maxStars; i++) {
+        const star = document.createElement("span");
+        star.className = "star " + (i < stars ? "" : "empty");
+        star.textContent = "★";
+        starsEl.appendChild(star);
+      }
+    }
+
+    function getPalette(name) {
+      const map = {
+        Bluey: { hair: "#4ea0ff", body: "#8bc8ff", legs: "#f5c999" },
+        Bingo: { hair: "#ffb45a", body: "#ffd59a", legs: "#f5d8ae" },
+        Bandit: { hair: "#1e2d4f", body: "#7f98df", legs: "#9d7657" },
+        Chilli: { hair: "#f3c384", body: "#ff9f84", legs: "#db9b93" }
+      };
+      return map[name] || map.Bluey;
+    }
+
+    function renderAvatar(name) {
+      const palette = getPalette(name);
+      avatar.innerHTML = `
+        <div class="hair" style="--hair:${palette.hair};"></div>
+        <div class="head"></div>
+        <div class="ear left"></div>
+        <div class="ear right"></div>
+        <div class="face">
+          <div class="eye left"></div>
+          <div class="eye right"></div>
+          <div class="smile"></div>
+        </div>
+        <div class="arm left"></div>
+        <div class="arm right"></div>
+        <div class="body" style="--body:${palette.body};"></div>
+        <div class="leg left" style="--legs:${palette.legs};"></div>
+        <div class="leg right" style="--legs:${palette.legs};"></div>
+      `;
+    }
+
+    function showToast(text, bg = "rgba(255,255,255,0.9)") {
+      toast.textContent = text;
+      toast.style.background = bg;
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function speak(text, voiceName = "Bluey") {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "es-ES";
+      u.rate = 0.92;
+      u.pitch = 1.4;
+      u.volume = 1;
+      const voices = synth.getVoices();
+      const preferred = voices.find(v => /es/i.test(v.lang)) || voices[0];
+      if (preferred) u.voice = preferred;
+      u.onstart = () => {
+        speechText.textContent = `${voiceName} dice...`;
+      };
+      u.onend = () => {
+        speechText.textContent = "¡Sigue así, tú puedes!";
+      };
+      synth.speak(u);
+    }
+
+    function playTone(frequency, duration, type = "sine", volume = 0.08) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = frequency;
+      gain.gain.value = volume;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(volume, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      osc.start(t);
+      osc.stop(t + duration);
+      osc.onended = () => ctx.close();
+    }
+
+    function playVictoryFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((n, i) => {
+        setTimeout(() => playTone(n, 0.22, "triangle", 0.065), i * 120);
+      });
+      setTimeout(() => applauses(), 260);
+    }
+
+    function applauses() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const gain = ctx.createGain();
+      gain.gain.value = 0.18;
+      gain.connect(ctx.destination);
+
+      const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 1.4;
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "highpass";
+      filter.frequency.value = 1200;
+      src.connect(filter);
+      filter.connect(gain);
+      src.start();
+      src.stop(ctx.currentTime + 0.2);
+      src.onended = () => ctx.close();
+
+      [660, 880, 990, 1100].forEach((f, i) => {
+        setTimeout(() => playTone(f, 0.14, "sine", 0.045), i * 90);
+      });
+    }
+
+    function playWrongSound() {
+      playTone(260, 0.18, "sine", 0.04);
+      setTimeout(() => playTone(200, 0.22, "triangle", 0.03), 110);
+    }
+
+    function burstConfetti() {
+      confettiZone.innerHTML = "";
+      const palette = ["#ff7b7b", "#ffd65e", "#62d9a7", "#72b5ff", "#ff9c75", "#c899ff", "#ffa6d8", "#c4f47a"];
+      for (let i = 0; i < 92; i++) {
+        const p = document.createElement("div");
+        p.className = "confetti";
+        p.style.background = palette[i % palette.length];
+        p.style.setProperty("--dx", `${(Math.random() - 0.5) * 800}px`);
+        p.style.setProperty("--dy", `${(Math.random() - 0.5) * 700 - 180}px`);
+        p.style.setProperty("--rot", `${(Math.random() * 720 - 360).toFixed(0)}deg`);
+        confettiZone.appendChild(p);
+      }
+      setTimeout(() => confettiZone.innerHTML = "", 1800);
+    }
+
+    function buildCards(level) {
+      cardsEl.innerHTML = "";
+      level.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "card";
+        button.style.setProperty("--tile", index % 2 === 0 ? "#d9f3ff" : "#ffe9ba");
+        button.innerHTML = `
+          <div class="card-inner">
+            <div class="tile-icon">${option.icon}</div>
+            <div class="tile-title">${option.text}</div>
+            <div class="tile-tag">${option.tag}</div>
+          </div>
+        `;
+
+        const sayOption = () => speak(option.text, level.character);
+        button.addEventListener("mouseenter", sayOption);
+        button.addEventListener("focus", sayOption);
+        button.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          sayOption();
+        }, { passive: false });
+
+        button.addEventListener("click", () => handleAnswer(index));
+        cardsEl.appendChild(button);
+      });
+    }
+
+    function renderLevel() {
+      const level = levels[levelIndex];
+      levelChip.textContent = `Nivel ${levelIndex + 1}`;
+      promptType.textContent = level.type;
+      promptText.textContent = level.prompt;
+      renderAvatar(level.character);
+      speechText.textContent = `¡Vamos a jugar con ${level.character}!`;
+      nextBtn.textContent = levelIndex === levels.length - 1 ? "Reiniciar" : "Siguiente";
+      buildCards(level);
+    }
+
+    function handleAnswer(index) {
+      if (locked) return;
+      const level = levels[levelIndex];
+      const cards = [...document.querySelectorAll(".card")];
+      locked = true;
+
+      if (index === level.correct) {
+        cards[index].classList.add("correct");
+        stars = Math.min(maxStars, stars + 1);
+        renderStars();
+        showToast("¡Muy bien! ¡Así resolvemos los problemas en la familia Heeler!", "rgba(223,255,234,0.9)");
+        speak("¡Muy bien, lo lograste! ¡Así resolvemos los problemas en la familia Heeler!", "Bluey");
+        playVictoryFanfare();
+        burstConfetti();
+
+        setTimeout(() => {
+          if (levelIndex < levels.length - 1) {
+            levelIndex += 1;
+            locked = false;
+            renderLevel();
+          } else {
+            levelIndex = 0;
+            stars = 0;
+            renderStars();
+            locked = false;
+            renderLevel();
+          }
+        }, 1400);
+      } else {
+        cards[index].classList.add("wrong");
+        showToast("¡Ups! Inténtalo de nuevo, tú puedes", "rgba(255,244,209,0.9)");
+        speak("¡Ups! Inténtalo de nuevo, tú puedes", "Bingo");
+        playWrongSound();
+
+        setTimeout(() => {
+          cards[index].classList.remove("wrong");
+          locked = false;
+        }, 800);
+      }
+    }
+
+    function resetGame() {
+      levelIndex = 0;
+      stars = 0;
+      locked = false;
+      renderStars();
+      renderLevel();
+    }
+
+    restartBtn.addEventListener("click", resetGame);
+    nextBtn.addEventListener("click", () => {
+      if (levelIndex < levels.length - 1) {
+        levelIndex += 1;
+        renderLevel();
+      } else {
+        resetGame();
+      }
+    });
+
+    renderStars();
+    renderLevel();
+    window.speechSynthesis?.getVoices();
+  </script>
+</body>
+</html>
